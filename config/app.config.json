@@ -1,0 +1,22 @@
+{
+  "development": {
+    "configId": "development",
+    "appName": "my app",
+    "appDesc": "my app desc",
+    "nodePort": 3000,
+    "csUrl": "https://ru.corner-stats.com",
+    "cronTime": "0 08 * * * *"
+  },
+  "testing": {
+    "configId": "testing",
+    "database": "my-app-db-test"
+  },
+  "staging": {
+    "configId": "staging",
+    "nodePort": 8080
+  },
+  "production": {
+    "configId": "production",
+    "nodePort": 8080
+  }
+}

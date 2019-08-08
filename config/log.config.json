@@ -1,0 +1,93 @@
+{
+  "appenders": {
+    "out": {
+      "type": "stdout"
+    },
+    "default": {
+      "type": "console",
+      "filename": "logs/default",
+      "pattern": "-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    },
+    "app": {
+      "type": "file",
+      "filename": "logs/app",
+      "pattern": "-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    },
+    "IC": {
+      "type": "file",
+      "filename": "logs/importcountries",
+      "pattern": ",-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    },
+    "IT": {
+      "type": "file",
+      "filename": "logs/importtournaments",
+      "pattern": ",-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    },
+    "IM": {
+      "type": "file",
+      "filename": "logs/importmatches",
+      "pattern": ",-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    },
+    "IMS": {
+      "type": "file",
+      "filename": "logs/importcmatchstats",
+      "pattern": ",-yyyy-MM-dd.log",
+      "alwaysIncludePattern": true,
+      "keepFileExt": true
+    }
+  },
+  "categories": {
+    "default": {
+      "appenders": [
+        "out",
+        "default"
+      ],
+      "level": "info"
+    },
+    "app": {
+      "appenders": [
+        "out",
+        "app"
+      ],
+      "level": "info"
+    },
+    "IC": {
+      "appenders": [
+        "out",
+        "IC"
+      ],
+      "level": "info"
+    },
+    "IT": {
+      "appenders": [
+        "out",
+        "IT"
+      ],
+      "level": "info"
+    },
+    "IM": {
+      "appenders": [
+        "out",
+        "IM"
+      ],
+      "level": "info"
+    },
+    "IMS": {
+      "appenders": [
+        "out",
+        "IMS"
+      ],
+      "level": "info"
+    }
+  }
+}
