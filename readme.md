@@ -19,6 +19,12 @@ cd CSParser
 ```sh
 npm install
 ```
+
+- Создаём таблицы в базе данных
+```sh
+ sequelize db:migrate
+```
+
 - Запускаем приложение
 ```sh
 npm start csparse
