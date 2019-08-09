@@ -41,5 +41,5 @@ npm install
 Запуск приложения
 ```sh
 cd csparser
-npm start csparse
+npm start csparser
 ```
