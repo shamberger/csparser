@@ -14,6 +14,7 @@ const log = console.log;
 log4js.configure(logConfig);
 const logger = log4js.getLogger('app');
 
+const env = process.env.NODE_ENV;
 
 async function importCountries() {
 
@@ -139,6 +140,7 @@ async function importMatches() {
 
     const res = await needle('get', task.url).catch((e) => {
       iMLogger.error('Страницу "' + task.url + '" не удалось загрузить. Ошибка: "' + e + '"');
+      return false;
     });
 
     const $ = cheerio.load(res.body);
@@ -307,6 +309,7 @@ async function importMatchStats(tournament = false) {
       return false;
     }
 
+
     //Парсинг статистики их верхнего блока
     match.date = matchDescription.find('.match-info__block').eq(0).find('.match-info__title').text();
     match.date = moment(match.date, "DD/MM/YY HH:mm").format("YYYY-MM-DD HH:mm:ss");
@@ -342,33 +345,35 @@ async function importMatchStats(tournament = false) {
     //Парсинг статистики из блока справа, вкладка другое.
     const otherBlockElements = $('.other_block .match-info__stats-score');
 
-    match.firstTeamKicks = otherBlockElements.eq(0).find('.other_block_left').text();
-    match.secondTeamKicks = otherBlockElements.eq(0).find('.other_block_right').text();
+    match.firstTeamKicks = otherBlockElements.find('span:contains("Всего ударов")').prev().text() || 0;
+    match.secondTeamKicks = otherBlockElements.find('span:contains("Всего ударов")').next().text() || 0;
 
-    match.firstTeamShotOnGoal = otherBlockElements.eq(1).find('.other_block_left').text();
-    match.secondTeamShotOnGoal = otherBlockElements.eq(1).find('.other_block_right').text();
+    match.firstTeamShotOnGoal = otherBlockElements.find('span:contains("Удары в створ")').prev().text() || 0;
+    match.secondTeamShotOnGoal = otherBlockElements.find('span:contains("Удары в створ")').next().text() || 0;
 
-    match.firstTeamMissedKick = otherBlockElements.eq(2).find('.other_block_left').text();
-    match.secondTeamMissedKick = otherBlockElements.eq(2).find('.other_block_right').text();
+    match.firstTeamMissedKick = otherBlockElements.find('span:contains("Удары мимо")').prev().text() || 0;
+    match.secondTeamMissedKick = otherBlockElements.find('span:contains("Удары мимо")').next().text() || 0;
 
-    match.firstTeamBlockedKick = otherBlockElements.eq(3).find('.other_block_left').text();
-    match.secondTeamBlockedKick = otherBlockElements.eq(3).find('.other_block_right').text();
+    match.firstTeamBlockedKick = otherBlockElements.find('span:contains("Заблокированные удары")').prev().text() || 0;
+    match.secondTeamBlockedKick = otherBlockElements.find('span:contains("Заблокированные удары")').next().text() || 0;
 
-    match.firstTeamFouls = otherBlockElements.eq(4).find('.other_block_left').text();
-    match.secondTeamFouls = otherBlockElements.eq(4).find('.other_block_right').text();
+    match.firstTeamFouls = otherBlockElements.find('span:contains("Фолы")').prev().text() || 0;
+    match.secondTeamFouls = otherBlockElements.find('span:contains("Фолы")').next().text() || 0;
 
-    match.firstTeamOffside = otherBlockElements.eq(5).find('.other_block_left').text();
-    match.secondTeamOffside = otherBlockElements.eq(5).find('.other_block_right').text();
+    match.firstTeamOffside = otherBlockElements.find('span:contains("Офсайды")').prev().text() || 0;
+    match.secondTeamOffside = otherBlockElements.find('span:contains("Офсайды")').next().text() || 0;
 
-    match.firstTeamHandling = otherBlockElements.eq(6).find('.other_block_left').text();
-    match.secondTeamHandling = otherBlockElements.eq(6).find('.other_block_right').text();
+    match.firstTeamHandling = otherBlockElements.find('span:contains("Владение")').prev().text() || 0;
+    match.secondTeamHandling = otherBlockElements.find('span:contains("Владение")').next().text() || 0;
 
-    match.firstTeamSaves = otherBlockElements.eq(7).find('.other_block_left').text();
-    match.secondTeamSaves = otherBlockElements.eq(7).find('.other_block_right').text();
+    match.firstTeamSaves = otherBlockElements.find('span:contains("Сэйвы")').prev().text() || 0;
+    match.secondTeamSaves = otherBlockElements.find('span:contains("Сэйвы")').next().text() || 0;
 
 
     models.Match.update(match, {where: {id: task.id}}).then(() => {
-      iMSLogger.info('Импортирована статистика для "' + task.name + '"');
+      iMSLogger.info('Импортирована статистика для "' + task.name + '" URL: "' + task.url + '"');
+    }).catch((e) => {
+      iMSLogger.error('Ошибка импорта статистики матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
     });
 
     //Импорт статистики голов из выдвигаемого списка
@@ -384,7 +389,9 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Goal.bulkCreate(goals);
+    models.Goal.bulkCreate(goals).catch((e) => {
+      iMSLogger.error('Ошибка импорта статистики голов матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
+    });
 
 
     //Импорт статистики карточек из выдвигаемого списка
@@ -402,7 +409,9 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Card.bulkCreate(cards);
+    models.Card.bulkCreate(cards).catch((e) => {
+      iMSLogger.error('Ошибка импорта статистики карточек матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
+    });
 
 
     //Импорт статистики замен из выдвигаемого списка
@@ -418,7 +427,9 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Sub.bulkCreate(subs);
+    models.Sub.bulkCreate(subs).catch((e) => {
+      iMSLogger.error('Ошибка импорта статистики угловых матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
+    });
 
     callback();
   }, 5);
@@ -453,6 +464,5 @@ async function run() {
 
   job.start();
 }
-
 
 run();
