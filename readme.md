@@ -40,6 +40,6 @@ npm install
 ## Работа с приложением
 Запуск приложения
 ```sh
-cd cspar
+cd csparser
 npm start csparse
 ```
