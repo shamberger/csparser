@@ -25,9 +25,14 @@ cd CSParser
 npm install
 ```
 
+- Устанавливаем cli для библиотеки sequelize
+```sh
+ npm install -g sequelize-cli
+```
+
 - Создаём таблицы в базе данных
 ```sh
- sequelize db:migrate
+ npx sequelize db:migrate
 ```
 
 - Запускаем приложение

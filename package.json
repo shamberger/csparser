@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "web": "nodemon ./bin/www",
-    "csparse": "NODE_ENV=production node ./modules/csparser.js"
+    "csparser": "SET NODE_ENV=production&&node ./modules/csparser.js",
+    "csparser_dev": "NODE_ENV=pdevelopment&&node ./modules/csparser.js"
   },
   "dependencies": {
     "async": "^3.1.0",
