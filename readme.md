@@ -3,11 +3,14 @@
 
 ## Установка
 - Установить [NodeJS](https://nodejs.org/en/) последней версии.
-- Установить MySQL, можно портабл.
+- Установить MySQL, создать базу "csparser".
+```sql
+CREATE TABLE csparser
+```
 - Загрузить архив с приложением, распаковать.
 - Внести изменения в файл конфигурации базы данных.
 ```sh
-csparse/config/config.json
+csparse/config/database.json
 ```
 - Внести изменения в файл конфигурации приложения, а именно сконфигурировать настройку крона.
 ```sh
@@ -17,7 +20,7 @@ csparse/config/app.config.json
 - Заходим в папку приложения
 
 ```sh
-cd CSParser
+cd csparser
 ```
 
 - Устанавливаем пакеты нужные для работы приложения
@@ -34,8 +37,9 @@ npm install
 ```sh
  npx sequelize db:migrate
 ```
-
-- Запускаем приложение
+## Работа с приложением
+Запуск приложения
 ```sh
+cd cspar
 npm start csparse
 ```
