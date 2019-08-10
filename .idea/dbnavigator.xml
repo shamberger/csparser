@@ -23,14 +23,7 @@
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
-    <loaded-nodes>
-      <connection connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999">
-        <schema name="csparser" object-types="view, index, table, procedure, constraint, function, column, dataset trigger" />
-      </connection>
-      <connection connection-id="26753159-05a3-4252-88ee-1115de0f9f82">
-        <schema name="main" object-types="view, table" />
-      </connection>
-    </loaded-nodes>
+    <loaded-nodes />
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="b609dc41-431d-4924-bb7c-3ccc9a435999">
@@ -41,9 +34,7 @@
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseFileManager">
-    <open-files>
-      <object connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999" object-ref="schemas/csparser/tables/Matches" />
-    </open-files>
+    <open-files />
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
     <connection id="b609dc41-431d-4924-bb7c-3ccc9a435999" />
@@ -79,7 +70,7 @@
     <connections>
       <connection id="b609dc41-431d-4924-bb7c-3ccc9a435999" active="true">
         <database>
-          <name value="Connection" />
+          <name value="MySql" />
           <description value="" />
           <database-type value="MYSQL" />
           <config-type value="BASIC" />
@@ -162,7 +153,7 @@
       </connection>
       <connection id="26753159-05a3-4252-88ee-1115de0f9f82" active="true">
         <database>
-          <name value="Connection 1" />
+          <name value="Sqlite" />
           <description value="" />
           <database-type value="SQLITE" />
           <config-type value="BASIC" />

@@ -1,17 +1,10 @@
 # Corner Stats Parser
-Парсер статистики матчей сайта corner-stats. Работает на NodeJS, база MySQL.
+Парсер статистики матчей c сайта corner-stats. Работает на NodeJS.
 
 ## Установка
 - Установить [NodeJS](https://nodejs.org/en/) последней версии.
-- Установить MySQL, создать базу "csparser".
-```sql
-CREATE TABLE csparser
-```
 - Загрузить архив с приложением, распаковать.
-- Внести изменения в файл конфигурации базы данных.
-```sh
-csparse/config/database.json
-```
+
 - Внести изменения в файл конфигурации приложения, а именно сконфигурировать настройку крона.
 ```sh
 csparse/config/app.config.json
