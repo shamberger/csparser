@@ -68,6 +68,7 @@ async function importCountries() {
   }
 
   iCLogger.info('Импорт стран закончен.');
+  return true;
 }
 
 
@@ -125,6 +126,7 @@ async function importTournaments() {
 
 
   iTLogger.info('Импорт лиг закончен.');
+  return true;
 }
 
 
@@ -269,6 +271,7 @@ async function importMatches() {
   await q.drain();
 
   iMLogger.info('Импорт матчей закончен.');
+  return true;
 }
 
 async function importMatchStats(tournament = false) {
@@ -477,7 +480,6 @@ async function run() {
     logger.info('Импорт по планировщику запущен.');
 
     logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
-
     const res = await needle('get', gConfig.csUrl);
     if (!res) {
       logger.error('Сайт не доступен, останавливаем импорт!');
@@ -486,14 +488,31 @@ async function run() {
 
     logger.info('Сайт доступен, начинаем проверку доступности базы данных.');
 
-    const countries = await models.Country.findAll().catch((e)=>{
-      log('База данных не доступна, завершаем приложение! Ошибка: '+ e);
+    const countries = await models.Country.findAll().catch((e) => {
+      log('База данных не доступна, завершаем приложение! Ошибка: ' + e);
       throw e;
     });
+    logger.info('База данных доступна.');
 
-    await importCountries();
-    await importTournaments();
-    await importMatches();
+
+    logger.info('Запускаем импорт стран.');
+    if (await importCountries())
+      logger.info('Импорт стран завершился успешно.');
+    else
+      logger.error('Импорт стран завершился с ошибкой.');
+
+    logger.info('Запускаем импорт лиг.');
+    if(await importTournaments())
+      logger.info('Импорт лиг завершился успешно.');
+    else
+      logger.error('Импорт лиг завершился с ошибкой.');
+
+    logger.info('Запускаем импорт матчей.');
+    if(await importMatches())
+      logger.info('Импорт матчей успешно завершён.');
+    else
+      logger.error('Импорт матчей завершён с ошибкой.');
+
 
     logger.info('Импорт по планировщику закончен.');
   });
