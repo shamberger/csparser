@@ -35,7 +35,7 @@ npm install
 
 - Создаём таблицы в базе данных
 ```sh
- npx sequelize db:migrate
+ npx sequelize-cli db:migrate
 ```
 ## Работа с приложением
 Запуск приложения
