@@ -478,7 +478,7 @@ async function checkConnections() {
     logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
     await needle('get', gConfig.csUrl)
   } catch (e) {
-    logger.warn('В данный момент сайт не доступен, пропускаем импорт. Ошибка: "' + e + '"')
+    logger.warn('В данный момент сайт не доступен, пропускаем импорт. Ошибка: "' + e + '"');
     return false;
   }
 
