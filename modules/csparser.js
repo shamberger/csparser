@@ -16,6 +16,7 @@ const logger = log4js.getLogger('app');
 
 const env = process.env.NODE_ENV;
 
+
 async function importCountries() {
 
   const iCLogger = log4js.getLogger('IC');
@@ -25,9 +26,12 @@ async function importCountries() {
   iCLogger.info('Запрашиваем ' + gConfig.csUrl);
   const res = await needle('get', gConfig.csUrl).catch((e) => {
     iCLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
-    throw e;
   });
 
+  if (!res) {
+    iCLogger.error('Импорт стран завершился с ошибкой.');
+    return false;
+  }
 
   iCLogger.info('Ответ от ' + gConfig.csUrl + ' получен');
 
@@ -76,8 +80,12 @@ async function importTournaments() {
   iTLogger.info('Запрашиваем сайт (' + gConfig.csUrl);
   const res = await needle('get', gConfig.csUrl).catch((e) => {
     iTLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
-    throw e;
   });
+
+  if (!res) {
+    iTLogger.error('Импорт лиг завершился с ошибкой.');
+    return false;
+  }
 
   iTLogger.info('Ответ от сайта получен');
 
@@ -139,9 +147,14 @@ async function importMatches() {
   let q = async.queue(async (task, callback) => {
 
     const res = await needle('get', task.url).catch((e) => {
-      iMLogger.error('Страницу "' + task.url + '" не удалось загрузить. Ошибка: "' + e + '"');
+      iMLogger.error('Страницу матча "' + task.url + '" не удалось загрузить. Ошибка: "' + e + '"');
       return false;
     });
+
+    if (!res) {
+      iMLogger.error('Импорт матча завершился с ошибкой.');
+      return false;
+    }
 
     const $ = cheerio.load(res.body);
 
@@ -255,6 +268,7 @@ async function importMatches() {
 
   await q.drain();
 
+  iMLogger.info('Импорт матчей закончен.');
 }
 
 async function importMatchStats(tournament = false) {
@@ -296,6 +310,11 @@ async function importMatchStats(tournament = false) {
     const res = await needle('get', task.url).catch((e) => {
       iMSLogger.error('Страницу матча "' + task.name + '" не удалось загрузить. URL: "' + task.url + '" Ошибка: "' + e + '"')
     });
+
+    if (!res) {
+      iMSLogger.error('Импорт матча завершился с ошибкой.');
+      return false;
+    }
 
     const $ = cheerio.load(res.body);
 
@@ -456,9 +475,26 @@ async function run() {
 
   const job = new CronJob(gConfig.cronTime, async function () {
     logger.info('Импорт по планировщику запущен.');
+
+    logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
+
+    const res = await needle('get', gConfig.csUrl);
+    if (!res) {
+      logger.error('Сайт не доступен, останавливаем импорт!');
+      return false;
+    }
+
+    logger.info('Сайт доступен, начинаем проверку доступности базы данных.');
+
+    const countries = await models.Country.findAll().catch((e)=>{
+      log('База данных не доступна, завершаем приложение! Ошибка: '+ e);
+      throw e;
+    });
+
     await importCountries();
     await importTournaments();
     await importMatches();
+
     logger.info('Импорт по планировщику закончен.');
   });
 
@@ -466,3 +502,4 @@ async function run() {
 }
 
 run();
+

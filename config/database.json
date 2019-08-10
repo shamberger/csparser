@@ -1,27 +1,14 @@
 {
   "development": {
-    "username": "root",
-    "password": "1234",
-    "database": "csparser",
-    "host": "127.0.0.1",
-    "port": "8889",
-    "dialect": "mysql"
+    "storage": "./db/database.sqlite3",
+    "dialect": "sqlite"
   },
   "test": {
-    "username": "root",
-    "password": "1234",
-    "database": "csparser",
-    "host": "127.0.0.1",
-    "port": "8889",
-    "dialect": "mysql"
+    "storage": "./db/database.sqlite3",
+    "dialect": "sqlite"
   },
   "production": {
-    "username": "root",
-    "password": "1234",
-    "database": "csparser",
-    "host": "127.0.0.1",
-    "port": "8889",
-    "dialect": "mysql",
-    "logging": false
+    "storage": "./db/database.sqlite3",
+    "dialect": "sqlite"
   }
 }

@@ -5,7 +5,7 @@
   "scripts": {
     "web": "nodemon ./bin/www",
     "csparser": "SET NODE_ENV=production&&node ./modules/csparser.js",
-    "csparser_dev": "NODE_ENV=pdevelopment&&node ./modules/csparser.js"
+    "csparser_dev": "NODE_ENV=development&&node ./modules/csparser.js"
   },
   "dependencies": {
     "async": "^3.1.0",
@@ -23,7 +23,8 @@
     "mysql2": "^1.6.5",
     "needle": "^2.4.0",
     "pug": "^2.0.4",
-    "sequelize": "^5.12.3"
+    "sequelize": "^5.12.3",
+    "sqlite3": "^4.0.9"
   },
   "devDependencies": {
     "@types/express": "^4.17.0",
