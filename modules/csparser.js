@@ -470,30 +470,44 @@ async function importMatchStats(tournament = false) {
   iMSLogger.info('Импорт статистики матчей закончен.');
 }
 
+async function checkConnections() {
+
+  logger.info('Начинаем проверки соединений.');
+
+  try {
+    logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
+    await needle('get', gConfig.csUrl)
+  } catch (e) {
+    logger.warn('В данный момент сайт не доступен, пропускаем импорт. Ошибка: "' + e + '"')
+    return false;
+  }
+
+  logger.info('Сайт доступен, начинаем проверку доступности базы данных.');
+
+  try {
+    await models.Country.findAll()
+  } catch (e) {
+    logger.error('База данных не доступна, завершаем приложение! Ошибка: ' + e);
+    return false;
+  }
+  logger.info('База данных доступна.');
+
+  logger.info('Проверка соединений прошла успешно.');
+  return true;
+}
 
 async function run() {
 
   logger.info('CSParser запущен.');
+
+  if (!await checkConnections()) return false;
+
   logger.info('Запуск импорта будет происходить каждые ' + gConfig.cronTime);
 
   const job = new CronJob(gConfig.cronTime, async function () {
     logger.info('Импорт по планировщику запущен.');
 
-    logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
-    const res = await needle('get', gConfig.csUrl);
-    if (!res) {
-      logger.error('Сайт не доступен, останавливаем импорт!');
-      return false;
-    }
-
-    logger.info('Сайт доступен, начинаем проверку доступности базы данных.');
-
-    const countries = await models.Country.findAll().catch((e) => {
-      log('База данных не доступна, завершаем приложение! Ошибка: ' + e);
-      throw e;
-    });
-    logger.info('База данных доступна.');
-
+    if (!await checkConnections()) return false;
 
     logger.info('Запускаем импорт стран.');
     if (await importCountries())
@@ -502,13 +516,13 @@ async function run() {
       logger.error('Импорт стран завершился с ошибкой.');
 
     logger.info('Запускаем импорт лиг.');
-    if(await importTournaments())
+    if (await importTournaments())
       logger.info('Импорт лиг завершился успешно.');
     else
       logger.error('Импорт лиг завершился с ошибкой.');
 
     logger.info('Запускаем импорт матчей.');
-    if(await importMatches())
+    if (await importMatches())
       logger.info('Импорт матчей успешно завершён.');
     else
       logger.error('Импорт матчей завершён с ошибкой.');
