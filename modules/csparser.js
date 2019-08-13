@@ -33,7 +33,7 @@ async function importCountries() {
     return false;
   }
 
-  iCLogger.info('Ответ от ' + gConfig.csUrl + ' получен');
+  iCLogger.info('Ответ от сайта получен');
 
   const $ = cheerio.load(res.body);
   const countriesElements = $('.style_li');
@@ -78,7 +78,7 @@ async function importTournaments() {
 
   iTLogger.info('Запущен импорт лиг.');
 
-  iTLogger.info('Запрашиваем сайт (' + gConfig.csUrl);
+  iTLogger.info('Запрашиваем сайт ' + gConfig.csUrl);
   const res = await needle('get', gConfig.csUrl).catch((e) => {
     iTLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
   });
@@ -139,10 +139,10 @@ async function importMatches() {
   const countries = await models.Country.findAll({where: {parse: true}, raw: true, include: ['tournament']});
 
   const tournamentCount = countries.length;
-  iMLogger.info('Список лиг получен, матчи будут импортированы из ' + tournamentCount + ' лиг(и)');
+  iMLogger.info('Матчи будут импортированы из ' + tournamentCount + ' лиг(и)');
 
   if (tournamentCount)
-    iMLogger.info('Начинаем импорт.');
+    iMLogger.info('Начинаем импорт матчей.');
   else
     iMLogger.info('Импорт матчей закончен.');
 
@@ -168,12 +168,12 @@ async function importMatches() {
 
     $('.old-matches-tr2').each((i, el) => {
       const linkElement = $(el).find('a').eq(0);
-      const teamNames = linkElement.text().split(' ')[1].split(' - ');
+      const teamNames = linkElement.text().substr(linkElement.text().indexOf(' ') + 1).split(' - ');
       matches.push({
         csId: linkElement.attr('href').split('/').pop(),
         link: linkElement.attr('href'),
         firstTeamName: teamNames[0],
-        secondTeamName: teamNames[0],
+        secondTeamName: teamNames[1],
         name: linkElement.text()
       });
     });
@@ -474,16 +474,8 @@ async function checkConnections() {
 
   logger.info('Начинаем проверки соединений.');
 
-  try {
-    logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
-    await needle('get', gConfig.csUrl)
-  } catch (e) {
-    logger.warn('В данный момент сайт не доступен, пропускаем импорт. Ошибка: "' + e + '"');
-    return false;
-  }
 
-  logger.info('Сайт доступен, начинаем проверку доступности базы данных.');
-
+  logger.info('Проверяем доступность базы данных.');
   try {
     await models.Country.findAll()
   } catch (e) {
@@ -492,41 +484,64 @@ async function checkConnections() {
   }
   logger.info('База данных доступна.');
 
+  try {
+    logger.info('Проверяем доступность сайта "' + gConfig.csUrl + '"');
+    await needle('get', gConfig.csUrl)
+  } catch (e) {
+    logger.warn('В данный момент сайт не доступен, пропускаем импорт. Ошибка: "' + e + '"');
+    return false;
+  }
+  logger.info('Сайт доступен.');
+
+
   logger.info('Проверка соединений прошла успешно.');
   return true;
 }
 
-async function run() {
 
-  logger.info('CSParser запущен.');
+async function run() {
 
   if (!await checkConnections()) return false;
 
-  logger.info('Запуск импорта будет происходить каждые ' + gConfig.cronTime);
+  logger.info('Запускаем импорт стран.');
+  if (await importCountries())
+    logger.info('Импорт стран завершился успешно.');
+  else
+    logger.error('Импорт стран завершился с ошибкой.');
+
+  logger.info('Запускаем импорт лиг.');
+  if (await importTournaments())
+    logger.info('Импорт лиг завершился успешно.');
+  else
+    logger.error('Импорт лиг завершился с ошибкой.');
+
+  logger.info('Запускаем импорт матчей.');
+  if (await importMatches())
+    logger.info('Импорт матчей успешно завершён.');
+  else
+    logger.error('Импорт матчей завершён с ошибкой.');
+
+  return true
+}
+
+async function app() {
+
+  logger.info('Corner Stats Parser запущен.');
+
+  logger.info('Запускаем первый импорт.');
+
+  if (await run()) {
+    logger.info('Первый импорт завершился.');
+  } else {
+    logger.error('Первый импорт завершился с ошибкой.')
+  }
+
+  logger.info('Запуск импорта по планировщику будет происходить каждые ' + gConfig.cronTime);
 
   const job = new CronJob(gConfig.cronTime, async function () {
     logger.info('Импорт по планировщику запущен.');
 
-    if (!await checkConnections()) return false;
-
-    logger.info('Запускаем импорт стран.');
-    if (await importCountries())
-      logger.info('Импорт стран завершился успешно.');
-    else
-      logger.error('Импорт стран завершился с ошибкой.');
-
-    logger.info('Запускаем импорт лиг.');
-    if (await importTournaments())
-      logger.info('Импорт лиг завершился успешно.');
-    else
-      logger.error('Импорт лиг завершился с ошибкой.');
-
-    logger.info('Запускаем импорт матчей.');
-    if (await importMatches())
-      logger.info('Импорт матчей успешно завершён.');
-    else
-      logger.error('Импорт матчей завершён с ошибкой.');
-
+    await run();
 
     logger.info('Импорт по планировщику закончен.');
   });
@@ -534,5 +549,4 @@ async function run() {
   job.start();
 }
 
-run();
-
+app();

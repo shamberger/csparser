@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DBNavigator.Project.DataEditorManager">
     <record-view-column-sorting-type value="BY_INDEX" />
-    <value-preview-text-wrapping value="true" />
+    <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DataExportManager">
@@ -23,7 +23,11 @@
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
-    <loaded-nodes />
+    <loaded-nodes>
+      <connection connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999">
+        <schema name="csparser" object-types="table, index, function, column, view, procedure, dataset trigger, constraint" />
+      </connection>
+    </loaded-nodes>
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="b609dc41-431d-4924-bb7c-3ccc9a435999">
@@ -31,7 +35,10 @@
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseFileManager">
-    <open-files />
+    <open-files>
+      <object connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999" object-ref="schemas/csparser/tables/Countries" />
+      <object connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999" object-ref="schemas/csparser/tables/Matches" />
+    </open-files>
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
     <connection id="b609dc41-431d-4924-bb7c-3ccc9a435999" />
@@ -83,7 +90,7 @@
           <deprecated-pwd value="MTIzNA==" />
         </database>
         <properties>
-          <auto-commit value="false" />
+          <auto-commit value="true" />
         </properties>
         <ssh-settings>
           <active value="false" />

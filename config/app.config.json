@@ -1,8 +1,8 @@
 {
   "development": {
     "configId": "development",
-    "appName": "my app",
-    "appDesc": "my app desc",
+    "appName": "CSParser",
+    "appDesc": "Corner Stats Parser",
     "nodePort": 3000,
     "csUrl": "https://ru.corner-stats.com",
     "cronTime": "0 35 * * * *"
