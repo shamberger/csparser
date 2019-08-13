@@ -143,8 +143,11 @@ async function importMatches() {
 
   if (tournamentCount)
     iMLogger.info('Начинаем импорт матчей.');
-  else
+  else {
     iMLogger.info('Импорт матчей закончен.');
+    return true;
+  }
+
 
   let q = async.queue(async (task, callback) => {
 
@@ -346,10 +349,16 @@ async function importMatchStats(tournament = false) {
     match.secondTeamScore = statsElements.find('.goals span').eq(1).text();
 
     match.firstTeamYellowCards = statsElements.find('.cards').find('span').eq(0).text();
+    match.firstTeamYellowCards = match.firstTeamYellowCards === '?' ? 0 : match.firstTeamYellowCards;
+
     match.secondTeamYellowCards = statsElements.find('.cards').find('span').eq(1).text();
+    match.secondTeamYellowCards = match.secondTeamYellowCards === '?' ? 0 : match.secondTeamYellowCards;
 
     match.firstTeamRedCards = statsElements.find('.cards').find('span').eq(2).text();
+    match.firstTeamRedCards = match.firstTeamRedCards === '?' ? 0 : match.firstTeamRedCards;
+
     match.secondTeamRedCards = statsElements.find('.cards').find('span').eq(3).text();
+    match.secondTeamRedCards = match.secondTeamRedCards === '?' ? 0 : match.secondTeamRedCards;
 
     match.firstTeamSubs = statsElements.find('.sub').find('span').eq(0).text();
     match.firstTeamSubs = match.firstTeamSubs === '?' ? 0 : match.firstTeamSubs;
