@@ -5,7 +5,7 @@
 - Установить [NodeJS](https://nodejs.org/en/) последней версии.
 - Установить MySQL, создать базу "csparser".
 ```sql
-CREATE TABLE csparser
+CREATE DATABASE csparser;
 ```
 - Загрузить архив с приложением, распаковать.
 - Внести изменения в файл конфигурации базы данных.
@@ -40,6 +40,18 @@ npm install
 ## Работа с приложением
 Запуск приложения
 ```sh
-cd csparser
 npm run csparser
 ```
+Обнуление БД
+```sh
+npx sequelize-cli db:migrate:undo:all
+```
+
+## Логи
+Логи расположены в папке /logs,  формат имени логов - назначение.-%дата%.log
+
+- **app** - общий лог приложения.
+- **importcountries** - лог функции импорта стран.
+- **importtournaments** -  лог функции импорта лиг.
+- **importmatches** -  лог функции импорта матчей.
+- **importmatchstats** -  лог функции импорта статистики матчей.

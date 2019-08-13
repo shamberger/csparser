@@ -20,28 +20,28 @@
     "IC": {
       "type": "file",
       "filename": "logs/importcountries",
-      "pattern": ",-yyyy-MM-dd.log",
+      "pattern": "-yyyy-MM-dd.log",
       "alwaysIncludePattern": true,
       "keepFileExt": true
     },
     "IT": {
       "type": "file",
       "filename": "logs/importtournaments",
-      "pattern": ",-yyyy-MM-dd.log",
+      "pattern": "-yyyy-MM-dd.log",
       "alwaysIncludePattern": true,
       "keepFileExt": true
     },
     "IM": {
       "type": "file",
       "filename": "logs/importmatches",
-      "pattern": ",-yyyy-MM-dd.log",
+      "pattern": "-yyyy-MM-dd.log",
       "alwaysIncludePattern": true,
       "keepFileExt": true
     },
     "IMS": {
       "type": "file",
       "filename": "logs/importcmatchstats",
-      "pattern": ",-yyyy-MM-dd.log",
+      "pattern": "-yyyy-MM-dd.log",
       "alwaysIncludePattern": true,
       "keepFileExt": true
     }
