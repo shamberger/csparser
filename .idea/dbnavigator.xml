@@ -25,7 +25,7 @@
     <show-object-properties value="true" />
     <loaded-nodes>
       <connection connection-id="b609dc41-431d-4924-bb7c-3ccc9a435999">
-        <schema name="csparser" object-types="index, view, constraint, procedure, table, dataset trigger, column, function" />
+        <schema name="csparser" object-types="constraint, table, index, dataset trigger, column" />
       </connection>
     </loaded-nodes>
   </component>
@@ -286,8 +286,6 @@
           <content-type name="SQL" enabled="true" />
           <content-type name="PL/SQL" enabled="true" />
           <content-type name="JavaScript" enabled="true" />
-          <content-type name="JSP" enabled="true" />
-          <content-type name="JSPx" enabled="true" />
           <content-type name="ASP" enabled="true" />
           <content-type name="YAML" enabled="true" />
         </content-types>

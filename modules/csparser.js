@@ -5,17 +5,13 @@ const models = require('../models');
 const config = require('../config');
 const logConfig = require('../config/log.config');
 const moment = require('moment');
-const chalk = require('chalk');
 const log4js = require('log4js');
 const CronJob = require('cron').CronJob;
-
-const log = console.log;
 
 log4js.configure(logConfig);
 const logger = log4js.getLogger('app');
 
 const env = process.env.NODE_ENV;
-
 
 async function importCountries() {
 
@@ -23,12 +19,13 @@ async function importCountries() {
 
   iCLogger.info('Запущен импорт стран.');
 
-  iCLogger.info('Запрашиваем ' + gConfig.csUrl);
-  const res = await needle('get', gConfig.csUrl).catch((e) => {
-    iCLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
-  });
+  let res = false;
 
-  if (!res) {
+  try {
+    iCLogger.info('Запрашиваем ' + gConfig.csUrl);
+    res = await needle('get', gConfig.csUrl)
+  } catch (e) {
+    iCLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
     iCLogger.error('Импорт стран завершился с ошибкой.');
     return false;
   }
@@ -40,7 +37,7 @@ async function importCountries() {
 
   const countriesElementsCount = countriesElements.length;
   iCLogger.info('Найдено стран ' + countriesElementsCount + ', начинаем импорт.');
-  iCLogger.info('Импортированы будут только отсутствуюбщие в базе страны!');
+  iCLogger.info('Импортированы будут только отсутствуюбщие в базе страны.');
 
   const countries = [];
 
@@ -52,19 +49,22 @@ async function importCountries() {
   });
 
   for (const country of countries) {
-    await models.Country.findOrCreate({
-      where: {altName: country.altName},
-      defaults: {
-        'name': country.name,
-        'altName': country.altName
-      }
-    }).then(([country, created]) => {
-      if (created)
+    try {
+      [details, isCreated] = await models.Country.findOrCreate({
+        where: {altName: country.altName},
+        defaults: {
+          'name': country.name,
+          'altName': country.altName
+        }
+      });
+      if (isCreated)
         iCLogger.info('Импортирована: ' + country.name)
-    }).catch((e) => {
+    } catch (e) {
       iCLogger.error('Ошибка соединения с базой! (' + e + ')');
-      throw e;
-    });
+      return false;
+    }
+
+
   }
 
   iCLogger.info('Импорт стран закончен.');
@@ -78,15 +78,17 @@ async function importTournaments() {
 
   iTLogger.info('Запущен импорт лиг.');
 
-  iTLogger.info('Запрашиваем сайт ' + gConfig.csUrl);
-  const res = await needle('get', gConfig.csUrl).catch((e) => {
-    iTLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
-  });
+  let res = false;
 
-  if (!res) {
+  try {
+    iTLogger.info('Запрашиваем сайт ' + gConfig.csUrl);
+    res = await needle('get', gConfig.csUrl)
+  } catch (e) {
+    iTLogger.error('Страницу "' + gConfig.csUrl + '" не удалось загрузить. Ошибка: "' + e + '"');
     iTLogger.error('Импорт лиг завершился с ошибкой.');
     return false;
   }
+
 
   iTLogger.info('Ответ от сайта получен');
 
@@ -95,6 +97,7 @@ async function importTournaments() {
 
   const tournamentsElementCount = tournamentsElements.length;
   iTLogger.info('Найдено лиг: ' + tournamentsElementCount + ', начинаем импорт.');
+  iTLogger.info('Импортированы будут только отсутствуюбщие в базе лиги.');
 
   const tournaments = [];
 
@@ -108,20 +111,23 @@ async function importTournaments() {
   });
 
   for (const tournament of tournaments) {
-    await models.Tournament.findOrCreate({
-      where: {altName: tournament.altName},
-      defaults: {
-        'name': tournament.name,
-        'altName': tournament.altName,
-        'countryAltName': tournament.country,
-        'link': tournament.link
-      }
-    }).then(() => {
-      iTLogger.info('Импорт лиги "' + tournament.name + '"');
-    }).catch((e) => {
+    try{
+      [details, isCreated] = await models.Tournament.findOrCreate({
+        where: {altName: tournament.altName},
+        defaults: {
+          'name': tournament.name,
+          'altName': tournament.altName,
+          'countryAltName': tournament.country,
+          'link': tournament.link
+        }
+      });
+      if (isCreated)
+        iTLogger.info('Импорт лиги "' + tournament.name + '"');
+    } catch (e) {
       iTLogger.error('Ошибка соединения с базой! (' + e + ')');
-      throw e;
-    });
+      return false;
+    }
+
   }
 
 
@@ -151,15 +157,18 @@ async function importMatches() {
 
   let q = async.queue(async (task, callback) => {
 
-    const res = await needle('get', task.url).catch((e) => {
-      iMLogger.error('Страницу матча "' + task.url + '" не удалось загрузить. Ошибка: "' + e + '"');
-      return false;
-    });
+    let res = false;
 
-    if (!res) {
+    try {
+      res = await needle('get', task.url)
+    } catch (e) {
+      iMLogger.error('Страницу матча "' + task.url + '" не удалось загрузить. Ошибка: "' + e + '"');
       iMLogger.error('Импорт матча завершился с ошибкой.');
       return false;
     }
+
+    if (task.allImported)
+      iMLogger.info('Выполняем поиск и иморт новых матчей для "' + task.countryName + '/' + task.tournamentName + '"');
 
     const $ = cheerio.load(res.body);
 
@@ -183,53 +192,52 @@ async function importMatches() {
 
 
     for (const match of matches) {
+
       let createdCount = 0;
-      await models.Match.findOrCreate({
-        where: {csId: match.csId},
-        defaults: {
-          link: match.link,
-          name: match.name,
-          firstTeamName: match.firstTeamName,
-          secondTeamName: match.secondTeamName,
-          countryName: task.countryName,
-          countryAltName: task.countryAltName,
-          tournamentAltName: task.tournamentAltName
-        }
-      }).then(([match, created]) => {
-        if (created) {
+
+      try {
+        const [details, isCreated] = await models.Match.findOrCreate({
+          where: {csId: match.csId},
+          defaults: {
+            link: match.link,
+            name: match.name,
+            firstTeamName: match.firstTeamName,
+            secondTeamName: match.secondTeamName,
+            countryName: task.countryName,
+            countryAltName: task.countryAltName,
+            tournamentAltName: task.tournamentAltName
+          }
+        });
+        if (isCreated) {
           createdCount++;
           iMLogger.info('Импорт матча: [лига: ' + task.index + ' из ' + tournamentCount + ', стр.: ' + task.page +
             ' из ' + pagesCount + '] ' + task.countryName + '/' + task.tournamentName + ' ' + match.name, '(' + match.link + ')'
           )
         }
-      }).catch((e) => {
+      } catch (e) {
         iMLogger.error('Ошибка соединения с базой! (' + e + ')');
-        throw e;
-      });
-    }
+        return false;
+      }
 
-    if (!task.allImported) {
-      await models.Tournament.update(
-        {status: 'Запущен полный импорт, импортируется ' + task.page + ' страница из ' + pagesCount},
-        {where: {id: task.id}}
-      );
-    } else {
-      await models.Tournament.update(
-        {status: 'Выполнен поиск и импорт новых матчей'},
-        {where: {id: task.id}}
-      );
-      iMLogger.info('Запускаем импорт статистики для "' + task.countryName + '/' + task.tournamentName + '"');
-      await importMatchStats(task.tournamentAltName);
     }
 
 
-    if (task.page === pagesCount && pagesCount > 1) {
-      await models.Tournament.update(
-        {allImported: true, status: 'Выполнен полный импорт.'},
-        {where: {id: task.id}}
-      );
-      iMLogger.info('Запускаем импорт статистики для "' + task.countryName + '/' + task.tournamentName + '"');
-      await importMatchStats(task.tournamentAltName);
+    let updateStatement = {};
+
+    updateStatement.status = !task.allImported
+      ? 'Запущен полный импорт, импортируется ' + task.page + ' страница из ' + pagesCount
+      : 'Выполнен поиск и импорт новых матчей';
+
+    updateStatement = (task.page === pagesCount && pagesCount > 1) ? {
+      status: 'Выполнен полный импорт.',
+      allImported: true
+    } : {};
+
+    try {
+      await models.Tournament.update(updateStatement, {where: {id: task.id}});
+    } catch (e) {
+      iMLogger.error('Ошибка соединения с базой! (' + e + ')');
+      return false;
     }
 
 
@@ -277,50 +285,34 @@ async function importMatches() {
   return true;
 }
 
-async function importMatchStats(tournament = false) {
+async function importMatchStats() {
 
   const iMSLogger = log4js.getLogger('IMS');
 
   iMSLogger.info('Запущен импорт статистики матчей.');
 
-  const tournamentAltName = tournament;
 
-  let whereStatement = {firstTeamScore: null};
+  let matches = await models.Match.findAndCountAll({where: {firstTeamScore: null}, raw: true});
 
-  if (tournamentAltName) {
-    whereStatement.tournamentAltName = tournamentAltName;
-    tournament = await models.Tournament.findOne({
-      where: {altName: tournamentAltName},
-      raw: true,
-      include: ['country']
-    }).catch((e) => {
-      iMSLogger.error('Ошибка соединения с базой! (' + e + ')');
-      throw e;
-    });
-    if (tournament)
-      iMSLogger.info('Импортируется статистика матчей из ' + tournament['country.name'] + '/' + tournament.name);
-    else {
-      iMSLogger.error('Матч с именем "' + tournamentAltName + '" не найден, возможно таблица лиг пуста!');
-      iMSLogger.error('Импорт статистики матчей для "' + tournamentAltName + '" завершён с ошибкой!');
-      return false;
-    }
-
+  if (matches.count)
+    iMSLogger.info('Стаитистика будет импортирована для ' + matches.count + ' матчей(а)');
+  else {
+    iMSLogger.info('Матчи для импорта статистики отсутствуют.');
+    return true
   }
-
-  let matches = await models.Match.findAndCountAll({where: whereStatement, raw: true});
-
-  iMSLogger.info('Стаитистика будет импортирована для ' + matches.count + ' матчей(а)');
 
   let q = async.queue(async (task, callback) => {
 
-    const res = await needle('get', task.url).catch((e) => {
-      iMSLogger.error('Страницу матча "' + task.name + '" не удалось загрузить. URL: "' + task.url + '" Ошибка: "' + e + '"')
-    });
+    let res = false;
 
-    if (!res) {
+    try {
+      res = await needle('get', task.url)
+    } catch (e) {
+      iMSLogger.error('Страницу матча "' + task.name + '" не удалось загрузить. URL: "' + task.url + '" Ошибка: "' + e + '"');
       iMSLogger.error('Импорт матча завершился с ошибкой.');
       return false;
     }
+
 
     const $ = cheerio.load(res.body);
 
@@ -366,11 +358,12 @@ async function importMatchStats(tournament = false) {
     match.secondTeamSubs = statsElements.find('.sub').find('span').eq(1).text();
     match.secondTeamSubs = match.secondTeamSubs === '?' ? 0 : match.secondTeamSubs;
 
-    match.firstTeamCorner = statsElements.find('.other .other_block_left').text().split(' ')[0];
-    match.secondTeamCorner = statsElements.find('.other .other_block_right').text().split(' ')[0];
-
-    match.firstTeamCornerFirstHalf = statsElements.find('.other .other_block_left').text().split(' ')[1].match(/\(([^)]+)\)/)[1];
-    match.secondTeamCornerFirstHalf = statsElements.find('.other .other_block_right').text().split(' ')[1].match(/\(([^)]+)\)/)[1];
+    const firstTeamCorners = statsElements.find('.other .other_block_left').text().split(' ');
+    const secondTeamCorners = statsElements.find('.other .other_block_right').text().split(' ');
+    match.firstTeamCorner = firstTeamCorners[0] === '?' ? 0 : firstTeamCorners[0];
+    match.secondTeamCorner = secondTeamCorners[0] === '?' ? 0 : secondTeamCorners[0];
+    match.firstTeamCornerFirstHalf = firstTeamCorners.length === 1 ? 0 : firstTeamCorners[1].match(/\(([^)]+)\)/)[1];
+    match.secondTeamCornerFirstHalf = secondTeamCorners.length === 1 ? 0 : secondTeamCorners[1].match(/\(([^)]+)\)/)[1];
 
 
     //Парсинг статистики из блока справа, вкладка другое.
@@ -401,14 +394,18 @@ async function importMatchStats(tournament = false) {
     match.secondTeamSaves = otherBlockElements.find('span:contains("Сэйвы")').next().text() || 0;
 
 
-    models.Match.update(match, {where: {id: task.id}}).then(() => {
-      iMSLogger.info('Импортирована статистика для "' + task.name + '" URL: "' + task.url + '"');
-    }).catch((e) => {
-      iMSLogger.error('Ошибка импорта статистики матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
-    });
+    try {
+      await models.Match.update(match, {where: {id: task.id}});
+    } catch (e) {
+      iMSLogger.error('Ошибка импорта статистики матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"');
+      return false;
+    }
+    iMSLogger.info('Импортирована статистика для "' + task.name + '" URL: "' + task.url + '"');
+
 
     //Импорт статистики голов из выдвигаемого списка
     const goals = [];
+
     $('.goals_block .match-info__row').each((i, el) => {
       const goalBy = $(el).find('.match-info__dropdown-1team img').length ? 1 : 2;
       const minute = $(el).find('.match-info__dropdown-time').text().replace(/\D/g, "");
@@ -420,17 +417,22 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Goal.bulkCreate(goals).catch((e) => {
-      iMSLogger.error('Ошибка импорта статистики голов матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
-    });
+
+    try {
+      models.Goal.bulkCreate(goals)
+    } catch (e) {
+      iMSLogger.error('Ошибка импорта статистики голов матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"');
+      return false;
+    }
 
 
     //Импорт статистики карточек из выдвигаемого списка
     const cards = [];
+
     $('.cards_block .match-info__row').each((i, el) => {
       const forTeam = $(el).find('.match-info__dropdown-1team img').length ? 1 : 2;
       const minute = $(el).find('.match-info__dropdown-time').text().replace(/\D/g, "");
-      const cardType = $(el).find('img').attr('src').split('/').pop().split('.')[0]
+      const cardType = $(el).find('img').attr('src').split('/').pop().split('.')[0];
       cards.push({
         matchCsId: task.id,
         firstTeamCards: $(el).find('.match-info__dropdown-1team').children().remove().end().text().trim(),
@@ -440,13 +442,18 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Card.bulkCreate(cards).catch((e) => {
-      iMSLogger.error('Ошибка импорта статистики карточек матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
-    });
+
+    try {
+      models.Card.bulkCreate(cards);
+    } catch (e) {
+      iMSLogger.error('Ошибка импорта статистики карточек матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"');
+      return false
+    }
 
 
     //Импорт статистики замен из выдвигаемого списка
     const subs = [];
+
     $('.sub_block .match-info__row').each((i, el) => {
       const team = $(el).find('.match-info__dropdown-1team img').length ? 1 : 2;
       const minute = $(el).find('.match-info__dropdown-time').text().replace(/\D/g, "");
@@ -458,9 +465,14 @@ async function importMatchStats(tournament = false) {
         minute
       });
     });
-    models.Sub.bulkCreate(subs).catch((e) => {
-      iMSLogger.error('Ошибка импорта статистики угловых матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"')
-    });
+
+    try {
+      models.Sub.bulkCreate(subs)
+    } catch (e) {
+      iMSLogger.error('Ошибка импорта статистики угловых матча в базу "' + task.name + '" URL: "' + task.url + '" Ошибка: "' + e + '"');
+      return false;
+    }
+
 
     callback();
   }, 5);
@@ -477,6 +489,8 @@ async function importMatchStats(tournament = false) {
   await q.drain();
 
   iMSLogger.info('Импорт статистики матчей закончен.');
+
+  return true
 }
 
 async function checkConnections() {
@@ -512,50 +526,68 @@ async function run() {
 
   if (!await checkConnections()) return false;
 
+
   logger.info('Запускаем импорт стран.');
   if (await importCountries())
     logger.info('Импорт стран завершился успешно.');
-  else
+  else {
     logger.error('Импорт стран завершился с ошибкой.');
+    return false
+  }
+
 
   logger.info('Запускаем импорт лиг.');
   if (await importTournaments())
     logger.info('Импорт лиг завершился успешно.');
-  else
+  else {
     logger.error('Импорт лиг завершился с ошибкой.');
+    return false
+  }
+
 
   logger.info('Запускаем импорт матчей.');
   if (await importMatches())
     logger.info('Импорт матчей успешно завершён.');
-  else
+  else {
     logger.error('Импорт матчей завершён с ошибкой.');
+    return false
+  }
+
+  logger.info('Запускаем импорт статистики матчей.');
+  if (await importMatchStats())
+    logger.info('Импорт статистики матчей успешно завершён.');
+  else {
+    logger.error('Импорт статистики матчей завершён с ошибкой.');
+    return false
+  }
 
   return true
 }
 
 async function app() {
 
-  logger.info('Corner Stats Parser запущен.');
+  logger.info('Corner Stats Parser ');
 
-  logger.info('Запускаем первый импорт.');
+  logger.info('Запускаем первоначальный импорт.');
 
   if (await run()) {
-    logger.info('Первый импорт завершился.');
+    logger.info('Первоначальный импорт завершился успешно.');
   } else {
-    logger.error('Первый импорт завершился с ошибкой.')
+    logger.error('Первоначальный импорт завершился с ошибкой, запуск планировщика невозможем без успешного прохождения данного импорта.');
+    return false;
   }
-
-  logger.info('Запуск импорта по планировщику будет происходить каждые ' + gConfig.cronTime);
 
   const job = new CronJob(gConfig.cronTime, async function () {
     logger.info('Импорт по планировщику запущен.');
 
     await run();
 
-    logger.info('Импорт по планировщику закончен.');
+    logger.info('Импорт по планировщику закончен, следущий запуск согласно схеме: ' + gConfig.cronTime);
   });
 
   job.start();
+
+  logger.info('Запущен планировщик импорта, схема времени запусков: ' + gConfig.cronTime);
 }
 
 app();
