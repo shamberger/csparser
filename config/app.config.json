@@ -5,7 +5,7 @@
     "appDesc": "Corner Stats Parser",
     "nodePort": 3000,
     "csUrl": "https://ru.corner-stats.com",
-    "cronTime": "0 35 * * * *"
+    "cronTime": "0 09 * * * *"
   },
   "testing": {
     "configId": "testing",

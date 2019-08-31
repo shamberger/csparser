@@ -111,7 +111,7 @@ async function importTournaments() {
   });
 
   for (const tournament of tournaments) {
-    try{
+    try {
       [details, isCreated] = await models.Tournament.findOrCreate({
         where: {altName: tournament.altName},
         defaults: {
@@ -502,7 +502,7 @@ async function checkConnections() {
   try {
     await models.Country.findAll()
   } catch (e) {
-    logger.error('База данных не доступна, завершаем приложение! Ошибка: ' + e);
+    logger.error('База данных не доступна! Ошибка: ' + e);
     return false;
   }
   logger.info('База данных доступна.');
@@ -580,9 +580,11 @@ async function app() {
   const job = new CronJob(gConfig.cronTime, async function () {
     logger.info('Импорт по планировщику запущен.');
 
-    await run();
-
-    logger.info('Импорт по планировщику закончен, следущий запуск согласно схеме: ' + gConfig.cronTime);
+    if (await run())
+      logger.info('Импорт по планировщику закончен, следущий запуск согласно схеме: ' + gConfig.cronTime);
+    else {
+      logger.error('Импорт по планировщику завершился с ошибкой, следущая попытка согласно схеме: '+ gConfig.cronTime);
+    }
   });
 
   job.start();
